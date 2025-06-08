@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api'; 
+import {
+  Box,
+  Button,
+  Input,
+  VStack,
+  HStack,
+  Text,
+  IconButton,
+  Heading,
+  useColorModeValue,
+  Flex,
+  Spacer,
+} from '@chakra-ui/react';
+import { FaTrash, FaCheckCircle, FaCircle } from 'react-icons/fa'; // Icons
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
+
+  // Colors for light/dark mode - assuming a dark theme for task items
+  const taskBg = useColorModeValue('gray.50', 'gray.700');
+  const taskCompletedBg = useColorModeValue('green.50', 'green.800');
+  const taskTextColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const completedTaskTextColor = useColorModeValue('gray.500', 'gray.400');
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -19,10 +39,11 @@ const Tasks = () => {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
+    if (!title.trim()) return; // Prevent adding empty tasks
     try {
       const res = await api.post('/tasks', { title });
-      setTasks([res.data, ...tasks]); // Add the new task to the top of the list
-      setTitle(''); // Clear the input field
+      setTasks([res.data, ...tasks]);
+      setTitle('');
     } catch (err) {
       console.error(err);
     }
@@ -30,15 +51,24 @@ const Tasks = () => {
 
   const handleToggleComplete = async (id) => {
     try {
-      const res = await api.put(`/tasks/${id}`);
-      // Find the task in the state and update it
-      setTasks(
-        tasks.map((task) =>
-          task.id === id ? { ...task, isCompleted: res.data.isCompleted } : task
-        )
+      const taskToToggle = tasks.find(task => task.id === id);
+      if (!taskToToggle) return;
+
+      // Optimistically update UI
+      const updatedTasks = tasks.map((task) =>
+        task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
       );
+      setTasks(updatedTasks);
+
+      // Make API call
+      await api.put(`/tasks/${id}`, { isCompleted: !taskToToggle.isCompleted });
+      // No need to setTasks again if API call is successful, UI is already updated
+      // If API call fails, we might want to revert the optimistic update (more complex)
     } catch (err) {
       console.error(err);
+      // Revert optimistic update on error
+      // This requires storing the original tasks state or re-fetching
+      // For simplicity, we'll just log the error here
     }
   };
 
@@ -53,40 +83,75 @@ const Tasks = () => {
   };
 
   return (
-    <div>
-      <h2>My Tasks</h2>
-      <form onSubmit={handleAddTask}>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a new task"
-          required
-        />
-        <button type="submit">Add Task</button>
-      </form>
-      <ul>
+    <VStack spacing={6} align="stretch" w="100%">
+      <Heading as="h2" size="lg" textAlign="center" color={taskTextColor}>
+        My Tasks
+      </Heading>
+      <Box as="form" onSubmit={handleAddTask} w="100%">
+        <HStack spacing={3}>
+          <Input
+            placeholder="Add a new task..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            bg={useColorModeValue('white', 'gray.600')}
+            borderColor={useColorModeValue('gray.300', 'gray.500')}
+            _hover={{ borderColor: useColorModeValue('gray.400', 'gray.400') }}
+            color={taskTextColor}
+          />
+          <Button type="submit" colorScheme="blue" px={8}>
+            Add Task
+          </Button>
+        </HStack>
+      </Box>
+
+      {tasks.length === 0 && (
+        <Text textAlign="center" color={useColorModeValue('gray.500', 'gray.400')} pt={4}>
+          No tasks yet. Add one above!
+        </Text>
+      )}
+
+      <VStack spacing={4} align="stretch" w="100%">
         {tasks.map((task) => (
-          <li key={task.id}>
-            <span
-              style={{
-                textDecoration: task.isCompleted ? 'line-through' : 'none',
-                cursor: 'pointer',
-              }}
-              onClick={() => handleToggleComplete(task.id)} // <-- TOGGLE on click
-            >
-              {task.title}
-            </span>
-            <button
-              onClick={() => handleDeleteTask(task.id)} // <-- DELETE on click
-              style={{ marginLeft: '10px', color: 'red' }}
-            >
-              X
-            </button>
-          </li>
+          <Box
+            key={task.id}
+            p={4}
+            bg={task.isCompleted ? taskCompletedBg : taskBg}
+            borderRadius="md"
+            boxShadow="sm"
+            borderWidth="1px"
+            borderColor={useColorModeValue('gray.200', 'gray.600')}
+          >
+            <Flex align="center">
+              <IconButton
+                icon={task.isCompleted ? <FaCheckCircle /> : <FaCircle />}
+                onClick={() => handleToggleComplete(task.id)}
+                isRound={true}
+                variant="ghost"
+                colorScheme={task.isCompleted ? 'green' : 'gray'}
+                aria-label={task.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+                mr={3}
+              />
+              <Text
+                as={task.isCompleted ? 's' : 'span'}
+                flexGrow={1}
+                color={task.isCompleted ? completedTaskTextColor : taskTextColor}
+                fontSize="lg"
+              >
+                {task.title}
+              </Text>
+              <IconButton
+                icon={<FaTrash />}
+                onClick={() => handleDeleteTask(task.id)}
+                isRound={true}
+                variant="ghost"
+                colorScheme="red"
+                aria-label="Delete task"
+              />
+            </Flex>
+          </Box>
         ))}
-      </ul>
-    </div>
+      </VStack>
+    </VStack>
   );
 };
 
