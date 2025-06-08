@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../utils/api'; // <-- Use our custom api instance
+import api from '../utils/api'; 
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -28,6 +28,30 @@ const Tasks = () => {
     }
   };
 
+  const handleToggleComplete = async (id) => {
+    try {
+      const res = await api.put(`/tasks/${id}`);
+      // Find the task in the state and update it
+      setTasks(
+        tasks.map((task) =>
+          task.id === id ? { ...task, isCompleted: res.data.isCompleted } : task
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteTask = async (id) => {
+    try {
+      await api.delete(`/tasks/${id}`);
+      // Filter out the deleted task from the state
+      setTasks(tasks.filter((task) => task.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div>
       <h2>My Tasks</h2>
@@ -43,7 +67,23 @@ const Tasks = () => {
       </form>
       <ul>
         {tasks.map((task) => (
-          <li key={task.id}>{task.title}</li>
+          <li key={task.id}>
+            <span
+              style={{
+                textDecoration: task.isCompleted ? 'line-through' : 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => handleToggleComplete(task.id)} // <-- TOGGLE on click
+            >
+              {task.title}
+            </span>
+            <button
+              onClick={() => handleDeleteTask(task.id)} // <-- DELETE on click
+              style={{ marginLeft: '10px', color: 'red' }}
+            >
+              X
+            </button>
+          </li>
         ))}
       </ul>
     </div>
