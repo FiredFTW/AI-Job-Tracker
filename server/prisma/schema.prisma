@@ -51,7 +51,6 @@ model Application {
   appliedAt DateTime          @default(now())
 
   nextStep        String? // e.g., "Online Assessment", "Phone Screen"
-  interviewDate   DateTime? // The date and time of the next scheduled interview
   lastContactedAt DateTime? // The date of the last email/communication
 
   // Link to the user

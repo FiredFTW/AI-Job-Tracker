@@ -51,7 +51,7 @@ router.post('/', auth, async (req, res) => {
 // @access  Private
 router.put('/:id', auth, async (req, res) => {
   // We can update any field passed in the body
-  const { company, role, status, nextStep, interviewDate } = req.body;
+  const { company, role, status, nextStep, appliedAt, lastContactedAt } = req.body;
 
   try {
     // First, verify the application exists and belongs to the user
@@ -69,8 +69,8 @@ router.put('/:id', auth, async (req, res) => {
         role,
         status,
         nextStep,
-        interviewDate: interviewDate ? new Date(interviewDate) : null,
-        lastContactedAt: new Date(), // Update last contacted whenever we touch it
+        appliedAt: appliedAt === null ? null : (appliedAt ? new Date(appliedAt) : undefined),
+        lastContactedAt: lastContactedAt === null ? null : (lastContactedAt ? new Date(lastContactedAt) : undefined),
       },
     });
     res.json(updatedApplication);
