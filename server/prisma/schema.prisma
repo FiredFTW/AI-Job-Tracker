@@ -4,7 +4,6 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,7 +20,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks     Task[]
+  tasks       Task[]
+  Application Application[]
 }
 
 model Task {
@@ -30,8 +30,45 @@ model Task {
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Foreign key to link to the User
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
+
+enum ApplicationStatus {
+  ACTIVE
+  OFFER
+  REJECTED
+  CLOSED
+}
+
+model Application {
+  id        Int               @id @default(autoincrement())
+  company   String
+  role      String
+  status    ApplicationStatus @default(ACTIVE)
+  appliedAt DateTime          @default(now())
+
+  nextStep        String? // e.g., "Online Assessment", "Phone Screen"
+  interviewDate   DateTime? // The date and time of the next scheduled interview
+  lastContactedAt DateTime? // The date of the last email/communication
+
+  // Link to the user
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  interactions Interaction[]
+}
+
+model Interaction {
+  id      Int      @id @default(autoincrement())
+  date    DateTime
+  subject String // The email subject line
+  summary String? // A short AI-generated summary of the email
+  type    String // e.g., "Automated Reply", "Invitation to Interview", "Rejection"
+
+  // Link to the application
+  applicationId Int
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }

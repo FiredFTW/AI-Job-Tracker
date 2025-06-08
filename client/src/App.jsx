@@ -10,26 +10,28 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import PrivateRoute from './components/PrivateRoute';
+import JobTrackerPage from './pages/JobTrackerPage';
+import Layout from './components/Layout'; // Import the Layout component
 
 function App() {
   return (
     <Router>
-      {/* This Box is now our main app container */}
-      <Box minH="100vh" bg="gray.50">
+      <Box minH="100vh" bg="gray.800" w="100%" minW="100vw"> {/* Ensure minW is 100vw */}
         <Routes>
-          {/* Public Routes */}
+          {/* Public Routes without Layout/Navbar */}
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected Route */}
+          {/* Protected Routes with Layout/Navbar */}
           <Route
             path="/dashboard"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
+            element={<PrivateRoute><Layout><DashboardPage /></Layout></PrivateRoute>}
           />
+          <Route
+            path="/jobs"
+            element={<PrivateRoute><Layout><JobTrackerPage /></Layout></PrivateRoute>}
+          />
+          
           {/* Default route */}
           <Route
             path="/"
