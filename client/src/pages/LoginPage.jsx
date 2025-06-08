@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; 
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ const LoginPage = () => {
     password: '',
   });
 
+  const navigate = useNavigate(); 
   const { email, password } = formData;
 
   const onChange = (e) =>
@@ -24,7 +26,7 @@ const LoginPage = () => {
       localStorage.setItem('token', res.data.token);
 
       console.log('Login successful!', res.data);
-      // TODO: Redirect to the main dashboard
+      navigate('/dashboard'); 
       
     } catch (err) {
       console.error(err.response.data);
