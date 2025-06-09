@@ -115,21 +115,20 @@ router.post(
   }
 );
 
-// @route   GET /api/auth/google
-// @desc    Initiate Google OAuth2 flow
-// @access  Private (user must be logged in to connect their account)
-router.get('/google', auth, (req, res) => {
-  const scopes = [
-    'https://www.googleapis.com/auth/gmail.readonly', // We only need to read emails
-  ];
+// @route   GET /api/auth/google/url
+// @desc    Get the Google OAuth2 consent page URL
+// @access  Private
+router.get('/google/url', auth, (req, res) => {
+  const scopes = ['https://www.googleapis.com/auth/gmail.readonly'];
 
   const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline', // IMPORTANT: This gets us a refresh token
+    access_type: 'offline',
     scope: scopes,
-    // We can pass the user's ID to know who to associate the token with on callback
-    state: req.user.id.toString(), 
+    state: req.user.id.toString(),
   });
-  res.redirect(url);
+
+  // Instead of redirecting, send the URL back to the front-end
+  res.json({ url });
 });
 
 // @route   GET /api/auth/google/callback
@@ -138,31 +137,34 @@ router.get('/google', auth, (req, res) => {
 router.get('/google/callback', async (req, res) => {
   const { code, state: userId } = req.query;
 
-  if (!userId) {
-    // Handle cases where state might be missing
-    return res.redirect('http://localhost:5173/jobs?error=invalid_state');
+  if (!userId || !code) {
+    return res.redirect('http://localhost:5173/jobs?error=invalid_request');
   }
 
   try {
-    const { tokens } = await oauth2Client.getToken(code);
+    const freshClient = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      'http://localhost:5000/api/auth/google/callback'
+    );
+    
+    const { tokens } = await freshClient.getToken(code);
     const { access_token, refresh_token, expiry_date } = tokens;
 
     await prisma.user.update({
       where: { id: parseInt(userId) },
       data: {
         googleAccessToken: access_token,
-        // IMPORTANT: Google only sends the refresh_token THE VERY FIRST TIME a user authorizes.
-        // If the user already has one, we don't want to overwrite it with null.
-        googleRefreshToken: refresh_token || undefined, 
+        googleRefreshToken: refresh_token || undefined,
         googleTokenExpiry: expiry_date ? new Date(expiry_date) : null,
       },
     });
 
-    // Redirect the user back to their job tracker page
     res.redirect('http://localhost:5173/jobs');
   } catch (error) {
-    console.error('Error getting Google tokens', error);
-    res.redirect('http://localhost:5173/jobs?error=auth_failed');
+    // Log the detailed error to see the exact reason from Google
+    console.error('Error exchanging Google code for tokens:', error.response?.data || error.message);
+    res.redirect('http://localhost:5173/jobs?error=token_exchange_failed');
   }
 });
 

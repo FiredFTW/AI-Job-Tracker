@@ -64,6 +64,20 @@ const JobTrackerPage = () => {
         }
         };
 
+
+    const handleConnectGoogle = async () => {
+        try {
+            // Step 1: Ask our back-end for the special Google URL
+            const res = await api.get('/auth/google/url'); 
+            const { url } = res.data;
+
+            // Step 2: Redirect the browser window to the URL we received
+            window.location.href = url;
+        } catch (err) {
+            console.error("Could not get Google auth URL", err);
+        }
+    };
+
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -93,6 +107,9 @@ return (
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Job Application Tracker</Heading>
                 <Button onClick={handleAddNew} colorScheme="blue">Add New Application</Button>
+                <Button onClick={handleConnectGoogle} colorScheme="green">
+                    Connect Gmail
+                </Button>
             </Flex>
             {applications.length === 0 ? (
                 <Text>No applications found. Add one to get started!</Text>
