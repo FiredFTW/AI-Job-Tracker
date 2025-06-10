@@ -1,12 +1,28 @@
-import React from 'react';
-import { Box, Flex, Button, Heading, Spacer } from '@chakra-ui/react'; // Add Spacer
+import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import { Box, Flex, Button, Heading, Spacer, Text } from '@chakra-ui/react'; // Import Text for better semantics
 import { Link as RouterLink } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode'; // Import the new library
 
 const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        setUser(decodedToken.user); 
+      }
+    } catch (error) {
+      console.error('Failed to decode token:', error);
+      handleLogout();
+    }
+  }, []);
 
   return (
     <Flex
@@ -35,11 +51,16 @@ const Navbar = () => {
       
       <Spacer /> {/* This pushes the logout button to the far right */}
 
-      <Box>
-        <Button onClick={handleLogout} colorScheme="red" variant="solid"> {/* Ensured solid variant for clear visibility */}
+      <Flex align="center">
+        {user && ( 
+          <Text mr={4}>
+            Logged In As: <strong>{user.email.split("@")[0]}</strong>
+          </Text>  
+        )}
+        <Button onClick={handleLogout} colorScheme="red" variant="solid">
           Logout
         </Button>
-      </Box>
+      </Flex>
     </Flex>
   );
 };

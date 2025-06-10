@@ -28,9 +28,14 @@ import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 const JobTrackerPage = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const contentBg = useColorModeValue('white', 'gray.700'); 
-    const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-    const borderColor = useColorModeValue('gray.200', 'gray.600');
+    const contentBg = useColorModeValue('gray.700', 'gray.700'); // Darker background for the page
+    const textColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900');
+    const borderColor = useColorModeValue('gray.600', 'gray.600');
+    const tableHeaderColor = useColorModeValue('gray.200', 'gray.200'); // Lighter text for table headers
+    const iconButtonColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); // Ensure icons are visible
+    const interactionBg = useColorModeValue('gray.700', 'gray.700'); // Darker background for interaction section
+    const interactionTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); // Text color for interaction section
+    const interactionSubjectColor = useColorModeValue('gray.400', 'gray.400'); // Slightly dimmer for subject line
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [currentApplication, setCurrentApplication] = useState(null);
     const [isSyncing, setIsSyncing] = useState(false); 
@@ -163,13 +168,14 @@ return (
                 <Table variant="simple">
                     <Thead>
                         <Tr>
-                            <Th w="5%"></Th> {/* --- NEW: Empty header for expand button --- */}
-                            <Th>Company</Th>
-                            <Th>Role</Th>
-                            <Th>Status</Th>
-                            <Th>Next Step</Th>
-                            <Th>Last Contact</Th>
-                            <Th>Date Applied</Th>
+                            <Th w="5%" color={tableHeaderColor}></Th> {/* --- NEW: Empty header for expand button --- */}
+                            <Th color={tableHeaderColor}>Company</Th>
+                            <Th color={tableHeaderColor}>Role</Th>
+                            <Th color={tableHeaderColor}>Status</Th>
+                            <Th color={tableHeaderColor}>Next Step</Th>
+                            <Th color={tableHeaderColor}>Last Contact</Th>
+                            <Th color={tableHeaderColor}>Date Applied</Th>
+                            <Th color={tableHeaderColor}>Actions</Th> {/* Added Actions header back */}
                         </Tr>
                     </Thead>
                     <Tbody>
@@ -183,6 +189,8 @@ return (
                                             icon={expandedAppId === app.id ? <ChevronUpIcon /> : <ChevronDownIcon />}
                                             aria-label="Expand row"
                                             isDisabled={!app.interactions || app.interactions.length === 0}
+                                            color={iconButtonColor} // Ensure icon is visible
+                                            _hover={{ bg: 'gray.600' }} // Hover effect for icon button
                                         />
                                     </Td>
                                     <Td>{app.company}</Td>
@@ -197,16 +205,16 @@ return (
                                     </Td>
                                 </Tr>
                                 <Tr>
-                                    <Td colSpan={7} p={0} border="none">
+                                    <Td colSpan={8} p={0} border="none"> {/* Adjusted colSpan to 8 to include Actions */}
                                         <Collapse in={expandedAppId === app.id} animateOpacity>
-                                            <Box p={4} bg={useColorModeValue('gray.50', 'gray.800')}>
+                                            <Box p={4} bg={interactionBg} color={interactionTextColor}>
                                                 <Heading size="sm" mb={2}>Interaction History</Heading>
                                                 {app.interactions && app.interactions.length > 0 ? (
                                                     <VStack align="start" spacing={3}>
                                                         {app.interactions.sort((a, b) => new Date(b.date) - new Date(a.date)).map(inter => (
                                                             <Box key={inter.id} w="100%">
-                                                                <Text fontWeight="bold">{new Date(inter.date).toLocaleString()} - {inter.type}</Text>
-                                                                <Text fontSize="sm" color="gray.500">Subject: {inter.subject}</Text>
+                                                                <Text fontWeight="bold">{new Date(inter.date).toLocaleString()}</Text>
+                                                                <Text fontSize="sm" color={interactionSubjectColor}>Subject: {inter.subject}</Text>
                                                                 <Text fontSize="sm" pl={2}>- {inter.summary}</Text>
                                                             </Box>
                                                         ))}

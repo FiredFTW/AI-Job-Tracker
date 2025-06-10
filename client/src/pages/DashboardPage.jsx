@@ -10,9 +10,9 @@ import {
 } from '@chakra-ui/react';
 
 const DashboardPage = () => {
-  const contentBg = useColorModeValue('white', 'gray.700'); 
-  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const contentBg = useColorModeValue('gray.700', 'gray.700'); 
+  const textColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900');
+  const borderColor = useColorModeValue('gray.600', 'gray.600');
 
   return (
     <Box w="100%" minW="100wh"> 

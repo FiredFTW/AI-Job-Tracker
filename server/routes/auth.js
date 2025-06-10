@@ -52,7 +52,7 @@ router.post(
       });
 
       // 4. Create and return a JWT
-      const payload = { user: { id: user.id } };
+      const payload = { user: { id: user.id, email: user.email} };
       jwt.sign(
         payload,
         process.env.JWT_SECRET, // You need to add this to your .env file!
@@ -98,7 +98,7 @@ router.post(
       }
 
       // 3. If they match, create and return a JWT
-      const payload = { user: { id: user.id } };
+      const payload = { user: { id: user.id, email: user.email } };
       jwt.sign(
         payload,
         process.env.JWT_SECRET,

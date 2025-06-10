@@ -20,10 +20,10 @@ const Tasks = () => {
   const [title, setTitle] = useState('');
 
   // Colors for light/dark mode - assuming a dark theme for task items
-  const taskBg = useColorModeValue('gray.50', 'gray.700');
-  const taskCompletedBg = useColorModeValue('green.50', 'green.800');
-  const taskTextColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-  const completedTaskTextColor = useColorModeValue('gray.500', 'gray.400');
+  const taskBg = useColorModeValue('gray.600', 'gray.700');
+  const taskCompletedBg = useColorModeValue('green.600', 'green.700');
+  const taskTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900');
+  const completedTaskTextColor = useColorModeValue('gray.400', 'gray.400'); // Adjusted for better visibility on green
 
   useEffect(() => {
     const fetchTasks = async () => {

@@ -7,6 +7,12 @@ import axios from 'axios'; // For Hugging Face
 const prisma = new PrismaClient();
 const router = express.Router();
 
+const getCompanyKey = (companyName) => {
+  if (!companyName) return null;
+  // Get the first word, remove punctuation, and make it lowercase.
+  return companyName.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+};
+
 // @route   GET api/applications
 // @desc    Get all of a user's job applications
 // @access  Private
@@ -181,7 +187,7 @@ router.post('/sync', auth, async (req, res) => {
         Respond ONLY with a valid JSON object with this exact schema: {"companyName": "string", "role": "string", "status": "string", "nextStep": "string", "summary": "string"}
         - companyName: The name of the company.
         - role: The job role mentioned. If none, use "Unknown Role".
-        - status: Classify as ONLY one of: 'ACTIVE', 'OFFER', 'REJECTED'.
+        - status: If the email contains an offer, use "OFFER". If it contains a rejection, use "REJECTED". Otherwise, use "ACTIVE".
         - nextStep: A very brief action item for the user. Examples: "Pending response", "Complete assessment", "Interview on DATE", "Reply to schedule".
         - summary: A one-sentence summary of the email's purpose.
         [/INST]
@@ -193,16 +199,21 @@ router.post('/sync', auth, async (req, res) => {
       const aiResult = JSON.parse(jsonString);
 
       // === Part 5: Find or Create Application & Update Database ===
-      let application = await prisma.application.findFirst({
-        where: { userId: user.id, company: { contains: aiResult.companyName, mode: 'insensitive' } },
-      });
+      const aiCompanyKey = getCompanyKey(aiResult.companyName);
 
-      // If application doesn't exist, create it.
+      // Find a matching application by comparing keys.
+      // We search through the `user.Application` array we fetched at the beginning.
+      let application = null;
+      if (aiCompanyKey) {
+        application = user.Application.find(app => getCompanyKey(app.company) === aiCompanyKey);
+      }
+
+      // If application doesn't exist after checking keys, create it.
       if (!application) {
         application = await prisma.application.create({
           data: {
             userId: user.id,
-            company: aiResult.companyName,
+            company: aiResult.companyName, // Use the more descriptive name from the latest email
             role: aiResult.role,
             status: aiResult.status,
             nextStep: aiResult.nextStep,
