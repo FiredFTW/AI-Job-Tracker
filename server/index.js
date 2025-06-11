@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js'; 
 import tasksRoutes from './routes/tasks.js';
 import applicationsRoutes from './routes/applications.js';
+import apiRoutes from './routes/index.js';
 
 dotenv.config();
 
@@ -27,17 +28,11 @@ const corsOptions = {
 };
 
 // Middleware
-app.use(cors()); // Allows requests from other origins 
+app.use(cors(corsOptions)); // Allows requests from other origins 
 app.use(express.json()); // Allows us to parse JSON in the request body
 
-// Simple test route
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Hello from the server!' });
-});
+app.use('/api', apiRoutes);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', tasksRoutes);
-app.use('/api/applications', applicationsRoutes); 
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
