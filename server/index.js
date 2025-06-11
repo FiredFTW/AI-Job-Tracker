@@ -11,6 +11,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'https://lifedash-server.onrender.com' 
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
 // Middleware
 app.use(cors()); // Allows requests from other origins 
 app.use(express.json()); // Allows us to parse JSON in the request body
