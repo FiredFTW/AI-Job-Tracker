@@ -142,7 +142,7 @@ router.post('/sync', auth, async (req, res) => {
     // === Part 2: Fetch Recent Emails from Gmail ===
     const listMessagesResponse = await gmail.users.messages.list({
       userId: 'me',
-      q: `(subject:("interview" OR "application" OR "assessment") OR "your application for" OR "thank you for applying") newer_than:5d`,
+      q: `(subject:("interview" OR "application" OR "assessment" OR "applying") OR "your application for" OR "thank you for applying") newer_than:5d`,
     });
 
     if (!listMessagesResponse.data.messages) {
