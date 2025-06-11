@@ -1,5 +1,9 @@
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import { Box, Flex, Button, Heading, Spacer, Text } from '@chakra-ui/react'; // Import Text for better semantics
+
+
 
 const Navbar = () => {
   const navigate = useNavigate(); 
