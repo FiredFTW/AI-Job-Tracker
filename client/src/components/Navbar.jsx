@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react'; // Import useState and useEffect
-import { Box, Flex, Button, Heading, Spacer, Text } from '@chakra-ui/react'; // Import Text for better semantics
-import { Link as RouterLink } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // Import the new library
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const Navbar = () => {
+  const navigate = useNavigate(); 
+
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    
+    navigate('/login'); 
   };
 
   const [user, setUser] = useState(null);
@@ -16,13 +17,19 @@ const Navbar = () => {
       const token = localStorage.getItem('token');
       if (token) {
         const decodedToken = jwtDecode(token);
-        setUser(decodedToken.user); 
+        // Important: Make sure the user object from the token has an email
+        if (decodedToken.user && decodedToken.user.email) {
+            setUser(decodedToken.user);
+        } else {
+            // If the token is malformed, log out
+            handleLogout();
+        }
       }
     } catch (error) {
       console.error('Failed to decode token:', error);
       handleLogout();
     }
-  }, []);
+  }, [navigate]); 
 
   return (
     <Flex
@@ -30,7 +37,7 @@ const Navbar = () => {
       align="center"
       wrap="wrap"
       padding="1.5rem"
-      bg="blue.600" // Changed background to a shade of blue
+      bg="blue.600"
       color="white"
     >
       <Heading as="h1" size="lg" letterSpacing={'-.1rem'}>
@@ -38,18 +45,15 @@ const Navbar = () => {
       </Heading>
 
       <Box ml={8}>
-        {/* The link to your original dashboard (Task Manager) */}
         <Button as={RouterLink} to="/dashboard" variant="ghost" _hover={{ bg: 'blue.700' }} _active={{ bg: 'blue.800' }}>
           Dashboard
         </Button>
-
-        {/* The NEW link to the Job Tracker */}
         <Button as={RouterLink} to="/jobs" variant="ghost" _hover={{ bg: 'blue.700' }} _active={{ bg: 'blue.800' }}>
           Job Tracker
         </Button>
       </Box>
       
-      <Spacer /> {/* This pushes the logout button to the far right */}
+      <Spacer />
 
       <Flex align="center">
         {user && ( 
