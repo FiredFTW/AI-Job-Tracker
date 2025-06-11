@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   'http://localhost:5173', 
-  'https://lifedash-server.onrender.com' 
+  'https://life-dash-psi.vercel.app' 
 ];
 
 const corsOptions = {
