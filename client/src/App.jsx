@@ -1,6 +1,6 @@
 // client/src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 
 // --- CHAKRA IMPORT: We'll use Box for the main layout ---
 import { Box } from '@chakra-ui/react';
