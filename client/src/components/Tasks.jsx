@@ -25,6 +25,12 @@ const Tasks = () => {
   const taskTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900');
   const completedTaskTextColor = useColorModeValue('gray.400', 'gray.400'); // Adjusted for better visibility on green
 
+  // Define consistent dark theme colors for the input field
+  const inputBg = useColorModeValue('gray.600', 'gray.600');
+  const inputBorderColor = useColorModeValue('gray.500', 'gray.500');
+  const inputHoverBorderColor = useColorModeValue('gray.400', 'gray.400');
+  const placeholderTextColor = useColorModeValue('gray.400', 'gray.400');
+
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -93,10 +99,11 @@ const Tasks = () => {
             placeholder="Add a new task..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            bg={useColorModeValue('white', 'gray.600')}
-            borderColor={useColorModeValue('gray.300', 'gray.500')}
-            _hover={{ borderColor: useColorModeValue('gray.400', 'gray.400') }}
-            color={taskTextColor}
+            bg={inputBg} // Use consistently dark background
+            borderColor={inputBorderColor} // Use consistently dark border
+            color={taskTextColor} // Text color is already consistently light
+            _hover={{ borderColor: inputHoverBorderColor }}
+            _placeholder={{ color: placeholderTextColor }} // Set placeholder color for dark bg
           />
           <Button type="submit" colorScheme="blue" px={8}>
             Add Task
