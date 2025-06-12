@@ -9,11 +9,12 @@ import auth from '../middleware/auth.js';
 
 const prisma = new PrismaClient();
 const router = express.Router();
+const redirectURI = `${process.env.SERVER_URL}/api/auth/google/callback`;
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:5000/api/auth/google/callback' // The redirect URI
+  redirectURI // The redirect URI
 );
 
 // --- Registration Route ---
@@ -138,14 +139,15 @@ router.get('/google/callback', async (req, res) => {
   const { code, state: userId } = req.query;
 
   if (!userId || !code) {
-    return res.redirect('http://localhost:5173/jobs?error=invalid_request');
+    return res.redirect('${process.env.CLIENT_URL}/jobs?error=invalid_request');
   }
+
 
   try {
     const freshClient = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      'http://localhost:5000/api/auth/google/callback'
+      redirectURI
     );
     
     const { tokens } = await freshClient.getToken(code);
@@ -160,11 +162,11 @@ router.get('/google/callback', async (req, res) => {
       },
     });
 
-    res.redirect('http://localhost:5173/jobs');
+    res.redirect(`${process.env.CLIENT_URL}/jobs`);
   } catch (error) {
     // Log the detailed error to see the exact reason from Google
     console.error('Error exchanging Google code for tokens:', error.response?.data || error.message);
-    res.redirect('http://localhost:5173/jobs?error=token_exchange_failed');
+    res.redirect(`${process.env.CLIENT_URL}/jobs?error=token_exchange_failed`);
   }
 });
 
