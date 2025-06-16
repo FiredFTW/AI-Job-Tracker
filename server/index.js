@@ -8,6 +8,7 @@ import applicationsRoutes from './routes/applications.js';
 import apiRoutes from './routes/index.js';
 
 dotenv.config();
+process.env.GOOGLE_APPLICATION_CREDENTIALS = './gcp-credentials.json';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

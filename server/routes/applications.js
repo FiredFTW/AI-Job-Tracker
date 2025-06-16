@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import auth from '../middleware/auth.js';
 import { google } from 'googleapis';
 import axios from 'axios'; // For Hugging Face
+import { VertexAI } from '@google-cloud/vertexai';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -178,25 +179,45 @@ router.post('/sync', auth, async (req, res) => {
       if (!emailBody) continue; // Skip if no body
 
 
-      // === Part 4: The AI Interpretation (Hugging Face) ===
-      const HUGGING_FACE_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3";
+      // === Part 4: The AI Interpretation (Google Gemini Pro) ===
+
+      // Initialize Vertex AI. It will automatically use the credentials
+      // you've set in the GOOGLE_APPLICATION_CREDENTIALS environment variable.
+      const vertex_ai = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: 'us-central1' });
+      const model = 'gemini-2.0-flash'; // A powerful, multi-purpose model
+
+      const generativeModel = vertex_ai.getGenerativeModel({ model: model });
+
+      // The prompt is a simple, direct instruction.
       const prompt = `
-        [INST] You are a job application assistant. Analyze the email below.
-        Subject: "${subject}"
-        Body: "${emailBody.substring(0, 1500)}"
-        Respond ONLY with a valid JSON object with this exact schema: {"companyName": "string", "role": "string", "status": "string", "nextStep": "string", "summary": "string"}
-        - companyName: The name of the company.
-        - role: The job role mentioned. If none, use "Unknown Role".
-        - status: If the email contains an offer, use "OFFER". If it contains a rejection, use "REJECTED". Otherwise, use "ACTIVE".
-        - nextStep: A very brief action item for the user. Examples: "Pending response", "Complete assessment", "Interview on DATE", "Reply to schedule".
-        - summary: A one-sentence summary of the email's purpose.
-        [/INST]
+      Task: You are an expert assistant for a job applicant. Analyze the following email and extract structured information into a single, valid JSON object.
+
+      Context:
+      - Email Subject: "${subject}"
+      - Email Body (first 1500 characters): "${emailBody.substring(0, 1500)}"
+
+      Instructions for the JSON object:
+      - "companyName": The name of the company.
+      - "role": The job role mentioned. If none is found, use the value "Unknown Role".
+      - "status": Classify as one of: 'ACTIVE', 'OFFER', 'REJECTED'.
+      - "nextStep": A very brief action item for the user. Examples: "Pending response", "Complete assessment", "Interview on DATE", "Reply to schedule".
+      - "summary": A one-sentence summary of the email's purpose.
+
+      Respond with ONLY the JSON object.
       `;
 
-      const hfResponse = await axios.post(HUGGING_FACE_API_URL, { inputs: prompt }, { headers: { Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}` }});
-      const generatedText = hfResponse.data[0].generated_text;
-      const jsonString = generatedText.substring(prompt.length).trim();
-      const aiResult = JSON.parse(jsonString);
+      const request = {
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      };
+
+      const resp = await generativeModel.generateContent(request);
+      // The response from Gemini is more structured, we need to access the text part.
+      const jsonString = resp.response.candidates[0].content.parts[0].text;
+
+      // We'll add a quick cleanup step to remove markdown formatting if the AI adds it
+      const cleanedJsonString = jsonString.replace(/```json\n|```/g, '').trim();
+
+      const aiResult = JSON.parse(cleanedJsonString);
 
       // === Part 5: Find or Create Application & Update Database ===
       const aiCompanyKey = getCompanyKey(aiResult.companyName);
