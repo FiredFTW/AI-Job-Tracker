@@ -8,7 +8,15 @@ import applicationsRoutes from './routes/applications.js';
 import apiRoutes from './routes/index.js';
 
 dotenv.config();
-process.env.GOOGLE_APPLICATION_CREDENTIALS = './gcp-credentials.json';
+
+
+if (process.env.NODE_ENV === 'production') {
+  // On Render, the secret file is mounted at a specific path
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = '/etc/secrets/gcp-credentials.json';
+} else {
+  // For local development, we use the file in our project directory
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = './gcp-credentials.json';
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
