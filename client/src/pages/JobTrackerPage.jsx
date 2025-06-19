@@ -20,6 +20,7 @@ import {
     IconButton,
     Icon,
     VStack,
+    Input, // Add Input to imports
 } from '@chakra-ui/react';
 import api from '../utils/api';
 import ApplicationModal from '../components/ApplicationModal'; 
@@ -28,18 +29,20 @@ import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 const JobTrackerPage = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const contentBg = useColorModeValue('gray.700', 'gray.700'); // Darker background for the page
+    const contentBg = useColorModeValue('gray.700', 'gray.700'); 
     const textColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900');
     const borderColor = useColorModeValue('gray.600', 'gray.600');
-    const tableHeaderColor = useColorModeValue('gray.200', 'gray.200'); // Lighter text for table headers
-    const iconButtonColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); // Ensure icons are visible
-    const interactionBg = useColorModeValue('gray.700', 'gray.700'); // Darker background for interaction section
-    const interactionTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); // Text color for interaction section
-    const interactionSubjectColor = useColorModeValue('gray.400', 'gray.400'); // Slightly dimmer for subject line
+    const tableHeaderColor = useColorModeValue('gray.200', 'gray.200'); 
+    const iconButtonColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); 
+    const interactionBg = useColorModeValue('gray.700', 'gray.700'); 
+    const interactionTextColor = useColorModeValue('whiteAlpha.900', 'whiteAlpha.900'); 
+    const interactionSubjectColor = useColorModeValue('gray.400', 'gray.400'); 
+    const rejectedRowBg = useColorModeValue('red.900', 'red.900'); // For rejected applications
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [currentApplication, setCurrentApplication] = useState(null);
     const [isSyncing, setIsSyncing] = useState(false); 
     const [expandedAppId, setExpandedAppId] = useState(null); 
+    const [searchQuery, setSearchQuery] = useState(''); // Add state for search query
     const toast = useToast(); 
 
     const handleApplicationAdded = (newApplication) => {
@@ -112,9 +115,23 @@ const JobTrackerPage = () => {
     };
 
     const handleToggleExpand = (appId) => {
-        // If the clicked row is already open, close it. Otherwise, open it.
         setExpandedAppId(expandedAppId === appId ? null : appId);
     };
+
+    // Filter and then sort applications
+    const filteredAndSortedApplications = React.useMemo(() => {
+        return applications
+            .filter(app => 
+                app.company.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .sort((a, b) => {
+                if (a.status === 'REJECTED' && b.status !== 'REJECTED') return 1;
+                if (a.status !== 'REJECTED' && b.status === 'REJECTED') return -1;
+                const dateA = new Date(a.lastContactedAt || a.appliedAt);
+                const dateB = new Date(b.lastContactedAt || b.appliedAt);
+                return dateB - dateA;
+            });
+    }, [applications, searchQuery]); // Add searchQuery to dependency array
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -140,7 +157,7 @@ const JobTrackerPage = () => {
   }
 
 return (
-    <Box bg={contentBg} color={textColor} w="80%" mx="auto" p={4} borderWidth={1} borderRadius="lg" boxShadow="md" borderColor={borderColor}>
+    <Box bg={contentBg} color={textColor} w="65%" mx="auto" p={4} borderWidth={1} borderRadius="lg" boxShadow="md" borderColor={borderColor}>
         <Box maxW="container.lg" mx="auto" p={4}>
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading>Job Application Tracker</Heading>
@@ -162,8 +179,21 @@ return (
                     </Button>
                 </Flex>
             </Flex>
-            {applications.length === 0 ? (
-                <Text>No applications found. Add one to get started!</Text>
+
+            {/* Search Bar */}
+            <Flex mb={4}>
+                <Input
+                    placeholder="Search by company name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    bg={useColorModeValue('gray.600', 'gray.700')}
+                    borderColor={borderColor}
+                    _placeholder={{ color: 'gray.100' }}
+                />
+            </Flex>
+
+            {filteredAndSortedApplications.length === 0 ? (
+                <Text>No applications found. Add one to get started or clear your search.</Text>
             ) : (
                 <Table variant="simple">
                     <Thead>
@@ -175,13 +205,13 @@ return (
                             <Th color={tableHeaderColor}>Next Step</Th>
                             <Th color={tableHeaderColor}>Last Contact</Th>
                             <Th color={tableHeaderColor}>Date Applied</Th>
-                            <Th color={tableHeaderColor}>Actions</Th> {/* Added Actions header back */}
+                            <Th color={tableHeaderColor}>Actions</Th>
                         </Tr>
                     </Thead>
                     <Tbody>
-                        {applications.map((app) => (
+                        {filteredAndSortedApplications.map((app) => (
                             <React.Fragment key={app.id}>
-                                <Tr>
+                                <Tr bg={app.status === 'REJECTED' ? rejectedRowBg : 'transparent'}>
                                     <Td>
                                         <IconButton
                                             variant="ghost"

@@ -94,10 +94,8 @@ const ApplicationModal = ({ isOpen, onClose, onSave, existingApplication }) => {
               <FormLabel>Status</FormLabel>
               <Select name="status" value={formData.status} onChange={handleChange}>
                 <option value="ACTIVE">Active</option>
-                <option value="INTERVIEWING">Interviewing</option>
                 <option value="OFFER">Offer</option>
                 <option value="REJECTED">Rejected</option>
-                <option value="CLOSED">Closed</option>
               </Select>
             </FormControl>
             <FormControl>

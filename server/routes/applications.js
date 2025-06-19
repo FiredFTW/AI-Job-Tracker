@@ -36,15 +36,23 @@ router.get('/', auth, async (req, res) => {
 // @desc    Create a job application
 // @access  Private
 router.post('/', auth, async (req, res) => {
-  const { company, role } = req.body;
+  // Destructure all relevant fields from the request body
+  const { company, role, status, nextStep, appliedAt, lastContactedAt } = req.body;
+
   if (!company || !role) {
     return res.status(400).json({ msg: 'Company and role are required' });
   }
+
   try {
     const newApplication = await prisma.application.create({
       data: {
         company,
         role,
+        status, // Add status
+        nextStep, // Add nextStep
+        // Convert date strings to Date objects, or handle nulls
+        appliedAt: appliedAt ? new Date(appliedAt) : null,
+        lastContactedAt: lastContactedAt ? new Date(lastContactedAt) : null,
         userId: req.user.id,
       },
     });
@@ -81,6 +89,8 @@ router.put('/:id', auth, async (req, res) => {
         appliedAt: appliedAt === null ? null : (appliedAt ? new Date(appliedAt) : undefined),
         lastContactedAt: lastContactedAt === null ? null : (lastContactedAt ? new Date(lastContactedAt) : undefined),
       },
+      // Ensure we return the application with its interactions
+      include: { interactions: true },
     });
     res.json(updatedApplication);
   } catch (err) {
