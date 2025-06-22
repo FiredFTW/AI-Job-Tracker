@@ -1,5 +1,5 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import auth from '../middleware/auth.js';
 import { google } from 'googleapis';
 import axios from 'axios'; // For Hugging Face
@@ -192,9 +192,9 @@ router.post('/sync', auth, async (req, res) => {
       // === Part 4: The AI Interpretation (Google Gemini Pro) ===
 
       // Initialize Vertex AI. It will automatically use the credentials
-      // you've set in the GOOGLE_APPLICATION_CREDENTIALS environment variable.
       const vertex_ai = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: 'us-central1' });
-      const model = 'gemini-2.0-flash'; // A powerful, multi-purpose model
+      // Corrected model name from your previous feedback.
+      const model = 'gemini-2.0-flash'; 
 
       const generativeModel = vertex_ai.getGenerativeModel({ model: model });
 
@@ -221,12 +221,22 @@ router.post('/sync', auth, async (req, res) => {
       };
 
       const resp = await generativeModel.generateContent(request);
-      // The response from Gemini is more structured, we need to access the text part.
-      const jsonString = resp.response.candidates[0].content.parts[0].text;
 
-      // We'll add a quick cleanup step to remove markdown formatting if the AI adds it
+      // Defensively access the AI's response to prevent crashes
+      const candidate = resp.response?.candidates?.[0];
+      const jsonString = candidate?.content?.parts?.[0]?.text;
+
+      // --- THE FIX IS HERE ---
+      // If we didn't get a valid string from the AI, log the problem and skip to the next email.
+      if (!jsonString) {
+        console.error('Invalid or empty AI response received for email with subject:', subject);
+        // Optional: Log the full response to see what Google sent back
+        // console.error('Full AI Response:', JSON.stringify(resp.response, null, 2));
+        continue; // Exit the current loop iteration
+      }
+
+      // Now we can safely proceed, knowing jsonString is a real string.
       const cleanedJsonString = jsonString.replace(/```json\n|```/g, '').trim();
-
       const aiResult = JSON.parse(cleanedJsonString);
 
       // === Part 5: Find or Create Application & Update Database ===
